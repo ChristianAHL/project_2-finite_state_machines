@@ -23,62 +23,69 @@
 #define SCREEN_HEIGHT 64 // OLED display height, in pixels
 
 // Declaration for an SSD1306 display connected to I2C (SDA, SCL pins)
-#define OLED_RESET     4 // Reset pin # (or -1 if sharing Arduino reset pin)
+#define OLED_RESET 4 // Reset pin # (or -1 if sharing Arduino reset pin)
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
-#define NUMFLAKES     10 // Number of snowflakes in the animation example
+#define NUMFLAKES 10 // Number of snowflakes in the animation example
 
+//Input pin declarations
+#define ANALOG_INPUT_PIN 17
 
 //Bitmap Sprites
-
-#define LOGO_HEIGHT   8
-#define LOGO_WIDTH    16
+#define LOGO_HEIGHT 8
+#define LOGO_WIDTH 16
 static const unsigned char PROGMEM logo_bmp[] =
-{ 
-  
-  B00000000, B11000000,
-  B00000001, B11000000,
-  B00000001, B11000000,
-  B00000011, B11100000,
-  B11110011, B11100000,
-  B11111110, B11111000,
-  B01111110, B11111111,
-  B00110011, B10011111,
-  B00011111, B11111100,
-  B00001101, B01110000,
-  B00011011, B10100000,
-  B00111111, B11100000,
-  B00111111, B11110000,
-  B01111100, B11110000,
-  B01110000, B01110000,
-  B00000000, B00110000 
+    {
 
-  };
+        B00000000, B11000000,
+        B00000001, B11000000,
+        B00000001, B11000000,
+        B00000011, B11100000,
+        B11110011, B11100000,
+        B11111110, B11111000,
+        B01111110, B11111111,
+        B00110011, B10011111,
+        B00011111, B11111100,
+        B00001101, B01110000,
+        B00011011, B10100000,
+        B00111111, B11100000,
+        B00111111, B11110000,
+        B01111100, B11110000,
+        B01110000, B01110000,
+        B00000000, B00110000
 
-const unsigned char test_bmp[] = 
-{
- 
-  B00001111,B11110000,
-  B00001111,B11110000,
-  B00111111,B11111100,
-  B01111111,B11111110,
-  B11111111,B11111111,
-  B11111111,B11111111,
-  B10101010,B01010101,
-  B11101110,B01110111 
 };
+
+const unsigned char test_bmp[] =
+    {
+
+        B00001111, B11110000,
+        B00001111, B11110000,
+        B00111111, B11111100,
+        B01111111, B11111110,
+        B11111111, B11111111,
+        B11111111, B11111111,
+        B10101010, B01010101,
+        B11101110, B01110111};
 
 //Function prototypes
 void testanimate(const uint8_t *bitmap, uint8_t w, uint8_t h);
-void testdrawbitmap(void);
+void draw_tank(void);
+void orient_turret();
 
-void setup() {
+void setup()
+{
   Serial.begin(9600);
 
+  //Set pin modes
+  pinMode(ANALOG_INPUT_PIN, INPUT);
+
   // SSD1306_SWITCHCAPVCC = generate display voltage from 3.3V internally
-  if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) { // Address 0x3D for 128x64
+  if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C))
+  { // Address 0x3D for 128x64
     Serial.println(F("SSD1306 allocation failed"));
-    for(;;); // Don't proceed, loop forever
+    for (;;)
+      ; // Don't proceed, loop forever
   }
 
   // Show initial display buffer contents on the screen --
@@ -97,39 +104,64 @@ void setup() {
   // unless that's what you want...rather, you can batch up a bunch of
   // drawing operations and then update the screen all at once by calling
   // display.display(). These examples demonstrate both approaches...
-
-  testdrawbitmap();
-  testanimate(test_bmp, LOGO_WIDTH, LOGO_HEIGHT); // Animate bitmaps
 }
 
-void loop() {
-}
+void loop()
+{
 
-void testdrawbitmap(void) {
   display.clearDisplay();
-
-  display.drawBitmap(
-    (display.width()  - 100 ),
-    (display.height() - 10),
-    test_bmp, LOGO_WIDTH, LOGO_HEIGHT, 1);
+  draw_tank();
+  orient_turret();
   display.display();
-  delay(1000);
+  //testanimate(test_bmp, LOGO_WIDTH, LOGO_HEIGHT); // Animate bitmaps
 }
 
-#define XPOS   0 // Indexes into the 'icons' array in function below
-#define YPOS   1
+void draw_tank(void)
+{
+
+  display.drawBitmap(0, (SCREEN_HEIGHT - LOGO_HEIGHT), test_bmp, LOGO_WIDTH, LOGO_HEIGHT, 1);
+}
+
+//Set tank turret orientation
+void orient_turret()
+{
+  uint8_t TURRET_LENGTH_PIXELS = 10;          //Turret length in Pixels
+  static uint8_t TURRET_ANGLE_DEGREES = 0;    //Turret angle in degrees
+  static uint8_t TURRET_ENDPOINT_X_PIXEL = 0; //Turret endpoint X coordinate
+  static uint8_t TURRET_ENDPOINT_Y_PIXEL = 0; //Turret endpoint Y coordinate
+
+  TURRET_ANGLE_DEGREES = map(analogRead(ANALOG_INPUT_PIN), 0, 1023, 0, 90); //Map turret angle to analog input pin
+
+  //Calculate turret endpoint using turret angle in degrees
+  TURRET_ENDPOINT_X_PIXEL = TURRET_LENGTH_PIXELS * cos(TURRET_ANGLE_DEGREES * (PI / 180));
+  TURRET_ENDPOINT_Y_PIXEL = TURRET_LENGTH_PIXELS * sin(TURRET_ANGLE_DEGREES * (PI / 180));
+
+  //Display angle value in degrees
+  display.setTextSize(1);
+  display.setTextColor(SSD1306_WHITE);
+  display.setCursor(0, 0);
+  display.print(TURRET_ANGLE_DEGREES);
+  display.print(" degrees");
+
+  display.drawLine((0 + LOGO_WIDTH / 2), (SCREEN_HEIGHT - LOGO_HEIGHT), (0 + LOGO_WIDTH / 2) + TURRET_ENDPOINT_X_PIXEL, (SCREEN_HEIGHT - LOGO_HEIGHT) - TURRET_ENDPOINT_Y_PIXEL, SSD1306_WHITE);
+}
+
+#define XPOS 0 // Indexes into the 'icons' array in function below
+#define YPOS 1
 #define DELTAY 2
 
-void testanimate(const uint8_t *bitmap, uint8_t w, uint8_t h) {
+void testanimate(const uint8_t *bitmap, uint8_t w, uint8_t h)
+{
   int8_t f, icons[NUMFLAKES][3];
   static float current_time_ms = 0;
   static float previous_time_ms = 0;
   static float fps_value = 0;
-  
+
   // Initialize 'snowflake' positions
-  for(f=0; f< NUMFLAKES; f++) {
-    icons[f][XPOS]   = random(1 - LOGO_WIDTH, display.width());
-    icons[f][YPOS]   = -LOGO_HEIGHT;
+  for (f = 0; f < NUMFLAKES; f++)
+  {
+    icons[f][XPOS] = random(1 - LOGO_WIDTH, display.width());
+    icons[f][YPOS] = -LOGO_HEIGHT;
     icons[f][DELTAY] = random(1, 6);
     Serial.print(F("x: "));
     Serial.print(icons[f][XPOS], DEC);
@@ -139,35 +171,36 @@ void testanimate(const uint8_t *bitmap, uint8_t w, uint8_t h) {
     Serial.println(icons[f][DELTAY], DEC);
   }
 
-  for(;;) { // Loop forever...
+  for (;;)
+  { // Loop forever...
     previous_time_ms = current_time_ms;
     display.clearDisplay(); // Clear the display buffer
     // Draw each snowflake:
-    for(f=0; f< NUMFLAKES; f++) {
+    for (f = 0; f < NUMFLAKES; f++)
+    {
       display.drawBitmap(icons[f][XPOS], icons[f][YPOS], bitmap, w, h, SSD1306_WHITE);
     }
 
     //Calculate and display frame rate
-    
     display.setTextSize(1); // Draw 2X-scale text
     display.setTextColor(SSD1306_WHITE);
     display.setCursor(95, 0);
-    
+
     current_time_ms = millis();
-    fps_value = 1/((current_time_ms - previous_time_ms)/1000);
+    fps_value = 1 / ((current_time_ms - previous_time_ms) / 1000);
     display.println(fps_value);
     display.display(); // Show the display buffer on the screen
-    
-
 
     // Then update coordinates of each flake...
-    for(f=0; f< NUMFLAKES; f++) {
+    for (f = 0; f < NUMFLAKES; f++)
+    {
       icons[f][YPOS] += icons[f][DELTAY];
       // If snowflake is off the bottom of the screen...
-      if (icons[f][YPOS] >= display.height()) {
+      if (icons[f][YPOS] >= display.height())
+      {
         // Reinitialize to a random position, just off the top
-        icons[f][XPOS]   = random(1 - LOGO_WIDTH, display.width());
-        icons[f][YPOS]   = -LOGO_HEIGHT;
+        icons[f][XPOS] = random(1 - LOGO_WIDTH, display.width());
+        icons[f][YPOS] = -LOGO_HEIGHT;
         icons[f][DELTAY] = random(1, 6);
       }
     }
