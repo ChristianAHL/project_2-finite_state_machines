@@ -34,26 +34,21 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
 //Global variables, constants, and state flags
 uint16_t DEBOUNCE_DELAY_MS = 200;
-
-float turret_endpoint_x = 0; //Turret endpoint X coordinate
-float turret_endpoint_y = 0; //Turret endpoint Y coordinate
-
-float projectile_position_x_pixel = (TANK_WIDTH / 2);
-float projectile_position_y_pixel = (SCREEN_HEIGHT - TANK_HEIGHT);
-
-static float turret_angle_degrees = 0; //Turret angle in degrees
-uint8_t TURRET_LENGTH_PIXELS = 10;     //Turret length in Pixels
-
-int16_t PLANE_X_POSITION = SCREEN_WIDTH;
-int16_t PLANE_Y_POSITION = 0;
-
-uint32_t player_score = 0;
-uint8_t player_life = 3;
-
-bool button_a_pressed = false;
-bool button_b_pressed = false;
-bool player_fired_flag = false;
-bool plane_hit_flag = false;
+float turret_endpoint_x = 0;                                       //Turret endpoint X coordinate
+float turret_endpoint_y = 0;                                       //Turret endpoint Y coordinate
+float projectile_position_x_pixel = (TANK_WIDTH / 2);              //X coordinate of projectile
+float projectile_position_y_pixel = (SCREEN_HEIGHT - TANK_HEIGHT); //Y coordinate of projectile
+static float turret_angle_degrees = 0;                             //Turret angle in degrees
+uint8_t TURRET_LENGTH_PIXELS = 10;                                 //Turret length in Pixels
+int16_t PLANE_X_POSITION = SCREEN_WIDTH;                           //X coordinate of plane position
+int16_t PLANE_Y_POSITION = 0;                                      //Y coordinate of plane position
+uint32_t player_score = 0;                                         //Accumulate player score
+uint8_t player_life = 3;                                           //Number of player lives
+bool button_a_pressed = false;                                     //Flag for 'a' button state
+bool button_b_pressed = false;                                     //Flag for 'b' button state
+bool player_fired_flag = false;                                    //Flag to indicate that player has fired
+bool plane_hit_flag = false;                                       //Flag to signify plane is hit
+bool projectile_launched = false;                                  //Flag to indicate that projectile is in-flight
 
 //Function prototypes
 void reset_data();
@@ -88,6 +83,7 @@ enum plane_states //Define possible plane states
 };
 static enum plane_states current_plane_state = FRESH;
 
+//Initial setup
 void setup()
 {
   Serial.begin(9600);
@@ -120,15 +116,16 @@ void setup()
 void loop()
 {
 
-  display.clearDisplay();
+  display.clearDisplay(); //Clear OLED display
 
-  switch (current_game_state)
+  switch (current_game_state) //Overall state machine governing the game
   {
 
   case START_SCREEN:
     draw_start_screen();
-    reset_data(); //Reset variables
+    reset_data(); //Reset variables for a new gate
 
+    //Set game state to PLAYING
     if (button_a_pressed == true)
     {
       button_a_pressed = false;
@@ -139,6 +136,7 @@ void loop()
 
   case PLAYING:
 
+    //Set game state to PAUSED
     if (button_b_pressed == true)
     {
       button_b_pressed = false;
@@ -152,17 +150,20 @@ void loop()
     calculate_turret_orientation();
     draw_turret();
 
+    //Launch a projectile
     if (button_a_pressed == true)
     {
       player_fired_flag = true;
       button_a_pressed = false;
     }
 
+    //Simulate projectile flight
     if (player_fired_flag == true)
     {
       simulate_projectile();
     }
 
+    //Set game state to GAME_OVER when player life reaches 0
     if (player_life == 0)
     {
       current_game_state = GAME_OVER;
@@ -172,12 +173,16 @@ void loop()
 
   case PAUSED:
     draw_pause_screen();
+
+    //Reset game
     if (button_a_pressed == true)
     {
 
       button_a_pressed = false;
       current_game_state = START_SCREEN;
     }
+
+    //Resume game
     if (button_b_pressed == true)
     {
 
@@ -187,7 +192,9 @@ void loop()
     break;
 
   case GAME_OVER:
+    //Signify that the game has ended
     draw_game_over_screen();
+    //Restart the game
     if (button_a_pressed == true || button_b_pressed == true)
     {
 
@@ -199,6 +206,7 @@ void loop()
     break;
   }
 
+  //Update displayed pixels on OLED
   display.display();
 }
 
@@ -208,8 +216,9 @@ void reset_data()
   player_score = 0;
   player_life = 3;
   player_fired_flag = false;
+  projectile_launched = false;
   PLANE_X_POSITION = SCREEN_WIDTH;
-  PLANE_Y_POSITION = (random(0, 4) * PLANE_HEIGHT);
+  PLANE_Y_POSITION = (random(0, 3) * PLANE_HEIGHT);
   projectile_position_x_pixel = (TANK_WIDTH / 2);
   projectile_position_y_pixel = (SCREEN_HEIGHT - TANK_HEIGHT);
   current_plane_state = FRESH;
@@ -242,6 +251,7 @@ void draw_start_screen()
   display.println("Push A to start");
 }
 
+//Draw pause screen
 void draw_pause_screen()
 {
 
@@ -255,6 +265,7 @@ void draw_pause_screen()
   display.println("start screen");
 }
 
+//Draw game over screen
 void draw_game_over_screen()
 {
   display.drawBitmap(48, 0, LOGO_BMP, LOGO_WIDTH, LOGO_HEIGHT, 1);
@@ -269,7 +280,7 @@ void draw_game_over_screen()
   display.println("restart the game");
 }
 
-//Draw and animate planes, simulate plane destruction when hit
+//Draw and animate planes, simulate plane damage and destruction when hit
 void draw_plane()
 {
 
@@ -329,7 +340,7 @@ void draw_plane()
     break;
   }
 
-  //Prepare to spawn new plane once plane exits screen, subtract 1 life
+  //Prepare to spawn new plane once plane exits screen, subtract 1 life if plane that exits is damaged or fresh
   if ((PLANE_X_POSITION <= -PLANE_WIDTH) || (PLANE_Y_POSITION >= SCREEN_HEIGHT))
   {
 
@@ -341,7 +352,7 @@ void draw_plane()
 
     PLANE_X_POSITION = SCREEN_WIDTH;
     PLANE_DELTA_X = random(1, 3);
-    PLANE_Y_POSITION = (random(0, 4) * PLANE_HEIGHT);
+    PLANE_Y_POSITION = (random(0, 3) * PLANE_HEIGHT);
     current_plane_state = FRESH;
     player_score_added = false;
   }
@@ -350,7 +361,7 @@ void draw_plane()
 //Display player score
 void display_player_score_and_life()
 {
-  display.setTextSize(1); // Draw 2X-scale text
+  display.setTextSize(1);
   display.setTextColor(SSD1306_WHITE);
   display.setCursor(0.45 * SCREEN_WIDTH, SCREEN_HEIGHT - 17);
   display.print("LIVES: ");
@@ -385,7 +396,6 @@ void simulate_projectile()
   static float projectile_delta_y = 0;          //Y component of projectile speed
   static float projectile_angle_degrees = 0;    //Projectile angle decoupled from turret
   float projectile_delta_xy = PLANE_HEIGHT / 2; //Projectile speed, set to a value smaller than the plane height to avoid skipping the plane
-  static bool projectile_launched = false;
 
   if (projectile_launched == false) //Set projectile angle to turret angle
   {
@@ -405,8 +415,7 @@ void simulate_projectile()
   int32_t MAX_X_RANGE_PIXELS = SCREEN_WIDTH;  //Set projectile max range to that of the screen size
   int32_t MAX_Y_RANGE_PIXELS = SCREEN_HEIGHT; //Set projectile max range to that of the screen size
 
-  //Draw projectile
-  display.drawCircle(projectile_position_x_pixel, projectile_position_y_pixel, 1, SSD1306_WHITE);
+    display.drawCircle(projectile_position_x_pixel, projectile_position_y_pixel, 1, SSD1306_WHITE); //Draw projectile
 
   //Update projectile position
   projectile_position_x_pixel = projectile_position_x_pixel + projectile_delta_x;
@@ -442,7 +451,7 @@ void simulate_projectile()
   }
 }
 
-void ISR_button_press_a() //Interrupt service routine that handles print frequency request one the push button is pressed
+void ISR_button_press_a() //Interrupt service routine that handles inputs from button 'a'
 {
 
   noInterrupts(); //Prevent other interrupts
@@ -460,7 +469,7 @@ void ISR_button_press_a() //Interrupt service routine that handles print frequen
   interrupts(); //Re-enable other interrupts
 }
 
-void ISR_button_press_b() //Interrupt service routine that handles print frequency request one the push button is pressed
+void ISR_button_press_b() //Interrupt service routine that handles inputs from button 'b'
 {
 
   noInterrupts(); //Prevent other interrupts
