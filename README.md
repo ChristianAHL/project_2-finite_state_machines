@@ -25,14 +25,14 @@ A finite state machine (FSM) is a machine that is defined by a finite amount of 
 
 The OLED (organic light-emitting diode) display used for this project utilizes the inter-integrated circuit (I2C) protocol for communication. From information gathered from lectures attended by the author of this report, I2C is a serial, half-duplex, and synchronous communication protocol. A circuit schematic of a system that uses the protocol is seen below (Pico Technology, n.d.):
 
-![I2C communication protocol schematic](media\I2C-Wiring.jpg) 
+![I2C communication protocol schematic](media/I2C-Wiring.jpg) 
 
 In the context of this project, there is only one master (the Teensy 3.2) and one slave (SDD1306 128 x 64 pixel OLED display). Serial data is sent through the SDA line while the clock data is sent by the master via the SCL line. Being an open drain system, pull-up resitors on the SDA and SCL lines are needed - the effects of which when varied will be discussed later in this report.
 
 # METHODOLOGY
 A game called 'AA' (Anti-Aircraft) of the programmer's own conception is designed, implemented, and tested for this embedded system project on finite state machines.
 
-![In-game screenshot](media\screen_cap1.jpg)
+![In-game screenshot](media/screen_cap1.jpg)
 
 The player takes control of an anti-aircraft vehicle to prevent enemy airplanes from passing through. The player can fire the vehicle's cannon with a push button and control the cannon's orientation using an analog input potentiometer. Each plane takes two hits to destroy (granting 1 point) and the game ends when three planes survive (player life reaches 0 at this point).
 
@@ -40,7 +40,7 @@ The player takes control of an anti-aircraft vehicle to prevent enemy airplanes 
 
 The circuit designed for this project is seen in the schematic below:
 
-![Project 2 circuit schematic](media\circuit_schematic.jpg)
+![Project 2 circuit schematic](media/circuit_schematic.jpg)
 
 - Push buttons Button_a and Button_b serve as inputs to the game. The function of these buttons change as the state of the game changes. During the playing state for example Button_a fires the player's cannon. In the start screen state, Button_a starts the game.
 - The Teensy 3.2 serves as the central processing unit of this system, taking inputs from the player and rendering pixel based graphics via I2C communication in the OLED screen.
@@ -50,7 +50,7 @@ The circuit designed for this project is seen in the schematic below:
 ## Circuit Implementation
 Pictured below is the implemented system circuit:
 
-![Implemented system circuit](media\circuit_implemented.jpg)
+![Implemented system circuit](media/circuit_implemented.jpg)
 
 1. Teensy 3.2
 2. 10k ohm potentiometer - analog input
@@ -72,13 +72,13 @@ It was decided to use the states listed below for this game:
 
 State transition diagrams (STD) illustrate how the states of a FSM transition to one another and what behaviour is exhibited during each state. The core elements of an STD include: An initial step, transitions/events, states, and actions/behaviours (MATLAB, 2014). A Moore style STD will be utilised for this project, where the actions/behaviours are defined within the state (MATLAB, 2014). Actions/behaviour in this section will be described qualitatively, they will be defined formally in the program implementation subsection of this report.
 
-![Program flow design modelled as a finite state machine with a state transition diagram](media\std.jpg)
+![Program flow design modelled as a finite state machine with a state transition diagram](media/std.jpg)
 
 ## Program Implementation - Setup, example code, and libraries
 
 Being an I2C device, the address of the OLED SSD1306 display needs to be determined so that the Teensy 3.2 can interface with it. Feldmann (2012) provides an I2C scanner program for Arduino which can be found at https://gist.github.com/tfeldmann/5411375. Running Feldmann's program in the Teensy 3.2 in the circuit implmimplemented yielded the following serial terminal output:
 
-![OLED display I2C address](media\device_address.jpg)
+![OLED display I2C address](media/device_address.jpg)
 
 The OLED display address is determined to be 0x3c which is then inputted into the section of code below:
 
@@ -108,7 +108,7 @@ SPI.h and Wire.h handle SPI and I2C communication respectively, with only the la
 
 As an initial experiment, the example code was trimmed to just show the falling stars animation. Code was written to determine the frame rate of the system with this animation being rendered:
 
-![Frame rate of falling stars demo](media\fps.jpg)
+![Frame rate of falling stars demo](media/fps.jpg)
 
 A frame rate of about 28 frames per second was observed. Since this was tested using a trimmed down program, this is expected to be the maximum frame rate of the final game.
 
@@ -132,7 +132,7 @@ static enum game_states current_game_state = START_SCREEN;
 
 The state transition diagram can then be implemented in the main loop using a switch case structure, with each case representing a game state containing behaviour (functions) to be performed during that state (cases collapsed for clarity):
 
-![STD implementation](media\std_implemented.jpg)
+![STD implementation](media/std_implemented.jpg)
 
 The states call functions to dictate how the syste should behave when that particular state is active. Most of these actions are drawing commands to the display. All of these drawing commands are first collected in the buffer then finally displayed to the player by the 'display.display();' line. The previous buffer is then erased by the line 'display.clearDisplay();' to facilitate the updated set of graphics to be drawn next (such as when a launched projectile's position is updated or as the enemy plane moves).
 
@@ -306,11 +306,11 @@ Where PLANE_DELTA_X controls how fast the plane moves. The plane then respawns a
 ```
 The planes are also modelled as a FSM:
 
-![SCL - No pull-up](media\plane_fsm.jpg)
+![SCL - No pull-up](media/plane_fsm.jpg)
 
 Which facilitates easier coding of  gameplay mechanics such as scoring, plane related animations (such as visually showing damage on the plane seen below), and player life deduction.
 
-![Degrading plane states](media\plane_degrade.jpg)
+![Degrading plane states](media/plane_degrade.jpg)
 
 Calculating the tank turret angle is critical since it determines the trajectory of the launched projectile. It is handle by the code below:
 
@@ -458,29 +458,29 @@ It was required to determine the effect of pull-up resistors on signal integrity
 
 Starting with the clock line (SCL) a sample waveform was extracted without an external pull-up resistor:
 
-![SCL - No pull-up](media\scl_nopullup.jpg)
+![SCL - No pull-up](media/scl_nopullup.jpg)
 
 It can be seen that it takes about 2 us for the signal to settle at the target 3 V magnitude. A 170 ohm resistor was then used to pull up the SCL line. The waveform below was generated:
 
-![SCL - No pull-up](media\scl_170.jpg)
+![SCL - No pull-up](media/scl_170.jpg)
 
 We see the signal integrity improve as it takes much less time for the signal to reach its maximum magnitude (in about 0.25 us). Using a pull-up resistor with a much larger resistance (around 10k ohms) the waveform below was extracted:
 
-![SCL - No pull-up](media\scl_10k.jpg)
+![SCL - No pull-up](media/scl_10k.jpg)
 
 The waveform appears to approach the reponse time of the case where no external pull-up reistor was used.
 
 Repeating the experiment for the SDA line, we extract the waveform below without any external pull-up resistor:
 
-![SCL - No pull-up](media\sda_nopullup.jpg)
+![SCL - No pull-up](media/sda_nopullup.jpg)
 
 It takes about 4.16 us for the signal to settle. Adding an external 170 ohm pull-up resistor:
 
-![SCL - No pull-up](media\sda_170.jpg)
+![SCL - No pull-up](media/sda_170.jpg)
 
 We see the signal greatly improve as it practically instantly reaches the maximum voltage. Checking the SDA response with a 10k ohm resistor:
 
-![SCL - No pull-up](media\sda_10k.jpg)
+![SCL - No pull-up](media/sda_10k.jpg)
 
 Just as it did with the SCL signal, as the pull-up resistor resistance increase a larger delay in settling time is observed.
 
