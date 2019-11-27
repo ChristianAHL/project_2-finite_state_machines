@@ -55,7 +55,7 @@ void reset_data();
 void draw_start_screen();
 void draw_pause_screen();
 void draw_game_over_screen();
-void draw_foreground();
+void draw_background();
 void draw_tank();
 void draw_plane();
 void display_player_score_and_life();
@@ -123,7 +123,7 @@ void loop()
 
   case START_SCREEN:
     draw_start_screen();
-    reset_data(); //Reset variables for a new gate
+    reset_data(); //Reset variables for a new game
 
     //Set game state to PLAYING
     if (button_a_pressed == true)
@@ -143,7 +143,7 @@ void loop()
       current_game_state = PAUSED;
     }
 
-    draw_foreground();
+    draw_background();
     draw_tank();
     draw_plane();
     display_player_score_and_life();
@@ -232,7 +232,7 @@ void draw_tank()
 }
 
 //Draw foreground
-void draw_foreground()
+void draw_background()
 {
 
   display.drawBitmap(0, -5, FOREGROUND_BMP, FOREGROUND_WIDTH, FOREGROUND_HEIGHT, 1);
