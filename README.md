@@ -134,7 +134,7 @@ The state transition diagram can then be implemented in the main loop using a sw
 
 ![STD implementation](media/std_implemented.jpg)
 
-The states call functions to dictate how the syste should behave when that particular state is active. Most of these actions are drawing commands to the display. All of these drawing commands are first collected in the buffer then finally displayed to the player by the 'display.display();' line. The previous buffer is then erased by the line 'display.clearDisplay();' to facilitate the updated set of graphics to be drawn next (such as when a launched projectile's position is updated or as the enemy plane moves).
+The states call functions to dictate how the system should behave when that particular state is active. Most of these actions are drawing commands to the display. All of these drawing commands are first collected in the buffer then finally displayed to the player by the 'display.display();' line. The previous buffer is then erased by the line 'display.clearDisplay();' to facilitate the updated set of graphics to be drawn next (such as when a launched projectile's position is updated or as the enemy plane moves).
 
 The states also control what the push buttons do (these push buttons are debounced and are attached to interrupts). For example during the PLAYING state we see Button_a's behaviour:
 
