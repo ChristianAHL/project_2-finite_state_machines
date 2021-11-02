@@ -76,7 +76,7 @@ State transition diagrams (STD) illustrate how the states of a FSM transition to
 
 ## Program Implementation - Setup, example code, and libraries
 
-Being an I2C device, the address of the OLED SSD1306 display needs to be determined so that the Teensy 3.2 can interface with it. Feldmann (2012) provides an I2C scanner program for Arduino which can be found at https://gist.github.com/tfeldmann/5411375. Running Feldmann's program in the Teensy 3.2 in the circuit implmimplemented yielded the following serial terminal output:
+Being an I2C device, the address of the OLED SSD1306 display needs to be determined so that the Teensy 3.2 can interface with it. Feldmann (2012) provides an I2C scanner program for Arduino which can be found at https://gist.github.com/tfeldmann/5411375. Running Feldmann's program in the Teensy 3.2 in the circuit implemented yielded the following serial terminal output:
 
 ![OLED display I2C address](media/device_address.jpg)
 
