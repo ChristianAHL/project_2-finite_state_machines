@@ -2,7 +2,7 @@
 By Christian Alexis Luz
 
 # Abstract
-An embedded system based game was successfuly demonstrated using the concept of finite state machines and state transition diagrams to control its program flow. Adafruit libraries were also successfully used to conveniently display graphics (mostly bitmaps) on an OLED display driven by a Teensy 3.2. Experiments conducted also found that adding an exteral pull up resistor (170 ohms for this case) to I2C devices improved signal integrity by reducing the time it takes for a signal to reach its full value.
+An embedded system based game was successfuly demonstrated using the concept of finite state machines and state transition diagrams to control its program flow. Adafruit libraries were also successfully used to conveniently display graphics (mostly bitmaps) on an OLED display driven by a Teensy 3.2. Experiments conducted also found that adding an external pull up resistor (170 ohms for this case) to I2C devices improved signal integrity by reducing the time it takes for a signal to reach its full value.
 
 # Introduction
 
